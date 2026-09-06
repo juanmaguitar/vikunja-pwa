@@ -5,8 +5,6 @@ services:
     build: .
     container_name: vikunja-pwa
     restart: unless-stopped
-    group_add:
-      - "${DOCKER_GID:-999}"
     ports:
       - "${PORT:-4300}:${PORT:-4300}"
     environment:
@@ -50,8 +48,6 @@ services:
       # in the upstream compose file, set VIKUNJA_ADMIN_SOURCE_CONTAINER_PATH
       # to the same absolute path as VIKUNJA_ADMIN_SOURCE_HOST_PATH.
       - ${VIKUNJA_ADMIN_SOURCE_HOST_PATH:-./deploy/admin-source}:${VIKUNJA_ADMIN_SOURCE_CONTAINER_PATH:-/app/admin-source}
-      # Only used when VIKUNJA_BRIDGE_MODE=docker-exec.
-      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   app_data:

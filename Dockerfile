@@ -19,7 +19,7 @@ ENV NODE_ENV=production
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --no-audit --no-fund && apk add --no-cache docker-cli docker-cli-compose
+RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/build-info.json ./build-info.json
