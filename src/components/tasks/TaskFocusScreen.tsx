@@ -9,7 +9,6 @@ import useWideLayout from '@/hooks/useWideLayout'
 import {useAppStore} from '@/store'
 import {findTaskInAnyContext, getSubtasksFor, getTaskCollectionForTask} from '@/store/selectors'
 import type {Screen, Task} from '@/types'
-import {formatOptionalLongDate} from '@/utils/formatting'
 import {getMenuAnchor} from '@/utils/menuPosition'
 import {useEffect, useMemo, useRef, useState} from 'react'
 
@@ -42,6 +41,7 @@ export default function TaskFocusScreen({sourceScreen}: {sourceScreen: Screen}) 
 	const taskDetailOpen = useAppStore(state => state.taskDetailOpen)
 	const taskDetail = useAppStore(state => state.taskDetail)
 	const openTaskDetail = useAppStore(state => state.openTaskDetail)
+	const closeTaskDetail = useAppStore(state => state.closeTaskDetail)
 	const openBulkTaskEditor = useAppStore(state => state.openBulkTaskEditor)
 	const taskShowCompleted = useShowCompletedTaskFilter(sourceScreen !== 'tasks')
 	const projectShowCompleted = useShowCompletedProjectFilter()
@@ -121,7 +121,6 @@ export default function TaskFocusScreen({sourceScreen}: {sourceScreen: Screen}) 
 	const projectPath = focusedTask ? getProjectAncestors(focusedTask.project_id).map(project => project.title) : []
 	const taskPath = focusedTask ? buildTaskPath(focusedTask, focusCollection) : []
 	const headerEyebrow = buildHeaderEyebrow(sourceScreen, projectPath, taskPath)
-	const dueDateLabel = formatOptionalLongDate(focusedTask?.due_date || null)
 	const projectTitle = projectPath[projectPath.length - 1] || focusedTask?.title || 'Task'
 
 	useEffect(() => {
@@ -129,7 +128,7 @@ export default function TaskFocusScreen({sourceScreen}: {sourceScreen: Screen}) 
 	}, [focusedTask?.id])
 
 	useEffect(() => {
-		if (!isWideLayout || !focusedTask?.id) {
+		if (!focusedTask?.id) {
 			syncedInspectorTaskIdRef.current = null
 			return
 		}
@@ -152,7 +151,7 @@ export default function TaskFocusScreen({sourceScreen}: {sourceScreen: Screen}) 
 		<div className="surface task-focus-surface">
 			<Topbar
 				backAction="close-focused-task"
-				onBack={closeFocusedTask}
+				onBack={() => { closeTaskDetail(); closeFocusedTask() }}
 				title={projectTitle}
 				eyebrow=""
 				desktopHeadingTitle={projectTitle}
@@ -243,24 +242,9 @@ export default function TaskFocusScreen({sourceScreen}: {sourceScreen: Screen}) 
 						{!focusedTask && loadingTasks ? <div className="empty-state">Loading task…</div> : null}
 						{focusedTask ? (
 							<>
-								<section className="task-focus-summary-card">
-									<button
-										className="task-focus-summary-button"
-										type="button"
-										data-action="open-focused-task-detail"
-										data-task-id={focusedTask.id}
-										onClick={() => void openTaskDetail(focusedTask.id)}
-									>
-										<div className="task-focus-summary-head">
-										<div className="task-focus-summary-title">{focusedTask.title}</div>
-										<div className="task-focus-summary-meta">
-											{dueDateLabel ? <span>Due {dueDateLabel}</span> : null}
-											{subtasks.length > 0 ? <span>{subtasks.length} subtasks</span> : null}
-										</div>
-										</div>
-								{focusedTask.description ? <div className="task-focus-summary-copy">{focusedTask.description}</div> : null}
-									</button>
-								</section>
+								<div className="detail-sheet task-workspace-body" data-task-body={`${sourceScreen}:${focusedTask.id}`} />
+								{taskDetail?.id !== focusedTask.id ? <div className="empty-state" role="status">Loading task details…</div> : null}
+								{!isWideLayout ? <details className="task-workspace-settings"><summary>Task settings</summary><div data-task-settings={`${sourceScreen}:${focusedTask.id}`} /></details> : null}
 								{focusSubtaskComposerOpen ? (
 									<SubtaskComposer
 										className="detail-subtask-composer"

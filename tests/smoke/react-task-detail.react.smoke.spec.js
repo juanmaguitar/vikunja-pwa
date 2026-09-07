@@ -31,6 +31,9 @@ async function expandSettingsSection(page, sectionId) {
 }
 
 async function openTaskDetailSection(page, sectionId) {
+	if (['assignees', 'organization', 'description', 'comments', 'attachments'].includes(sectionId)) {
+		return page.locator(`[data-task-body] [data-detail-section="${sectionId}"]`)
+	}
 	const toggle = page.locator(`[data-detail-section-toggle="${sectionId}"]`)
 	if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
 		await toggle.click()
@@ -45,41 +48,25 @@ test('task detail edits title, priority, favorite state, and labels', async ({pa
 	})
 
 	await page.locator('.task-row').filter({hasText: 'Prepare daily summary'}).locator('[data-action="open-task-focus"]').click()
-	await page.locator('[data-action="open-focused-task-detail"]').click()
+	await page.locator('.task-workspace-settings > summary').click()
 	await expect(page.locator('[data-detail-title]')).toBeVisible()
 	await expect(page.locator('[data-detail-section-toggle="related"]')).toHaveAttribute('aria-expanded', 'false')
 	await expect(page.locator('[data-detail-section-toggle="planning"]')).toHaveAttribute('aria-expanded', 'false')
 	await expect(page.locator('[data-detail-section-toggle="recurring"]')).toHaveAttribute('aria-expanded', 'false')
 	await expect(page.locator('[data-detail-section-toggle="reminders"]')).toHaveAttribute('aria-expanded', 'false')
-	await expect(page.locator('[data-detail-section-toggle="assignees"]')).toHaveAttribute('aria-expanded', 'false')
-	await expect(page.locator('[data-detail-section-toggle="comments"]')).toHaveAttribute('aria-expanded', 'false')
-	await expect(page.locator('[data-detail-section-toggle="attachments"]')).toHaveAttribute('aria-expanded', 'false')
-	await expect(page.locator('[data-detail-section-toggle="info"]')).toHaveAttribute('aria-expanded', 'false')
+	for (const section of ['assignees', 'organization', 'description', 'comments', 'attachments']) {
+		await expect(page.locator(`[data-task-body] [data-detail-section="${section}"]`)).toBeVisible()
+	}
 	await page.locator('[data-detail-section-toggle="planning"]').click()
 	await expect(page.locator('[data-detail-section-toggle="planning"]')).toHaveAttribute('aria-expanded', 'true')
 	await page.locator('[data-detail-section-toggle="recurring"]').click()
 	await expect(page.locator('[data-detail-section-toggle="recurring"]')).toHaveAttribute('aria-expanded', 'true')
 	await expect(page.locator('[data-detail-section-toggle="planning"]')).toHaveAttribute('aria-expanded', 'false')
-	await page.locator('[data-detail-section-toggle="reminders"]').click()
-	await expect(page.locator('[data-detail-section-toggle="reminders"]')).toHaveAttribute('aria-expanded', 'true')
-	await expect(page.locator('[data-detail-section-toggle="recurring"]')).toHaveAttribute('aria-expanded', 'false')
-	await page.locator('[data-detail-section-toggle="assignees"]').click()
-	await expect(page.locator('[data-detail-section-toggle="assignees"]')).toHaveAttribute('aria-expanded', 'true')
-	await expect(page.locator('[data-detail-section-toggle="reminders"]')).toHaveAttribute('aria-expanded', 'false')
-	await page.locator('[data-detail-section-toggle="comments"]').click()
-	await expect(page.locator('[data-detail-section-toggle="comments"]')).toHaveAttribute('aria-expanded', 'true')
-	await expect(page.locator('[data-detail-section-toggle="assignees"]')).toHaveAttribute('aria-expanded', 'false')
-	await page.locator('[data-detail-section-toggle="attachments"]').click()
-	await expect(page.locator('[data-detail-section-toggle="attachments"]')).toHaveAttribute('aria-expanded', 'true')
-	await expect(page.locator('[data-detail-section-toggle="comments"]')).toHaveAttribute('aria-expanded', 'false')
-	await page.locator('[data-detail-section-toggle="info"]').click()
-	await expect(page.locator('[data-detail-section-toggle="info"]')).toHaveAttribute('aria-expanded', 'true')
-	await expect(page.locator('[data-detail-section-toggle="attachments"]')).toHaveAttribute('aria-expanded', 'false')
 
 	const titleInput = page.locator('[data-detail-title]')
 	await titleInput.fill('Prepare daily summary updated')
 	await titleInput.blur()
-	await expect(page.getByRole('heading', {name: 'Prepare daily summary updated'})).toBeVisible()
+	await expect.poll(async () => (await stack.mockApi('tasks/102')).title).toBe('Prepare daily summary updated')
 
 	await openTaskDetailSection(page, 'planning')
 	await expect(page.locator('[data-detail-percent-done-value]')).toHaveText('35%')
@@ -246,15 +233,14 @@ test('task detail edits title, priority, favorite state, and labels', async ({pa
 	await openTaskDetailSection(page, 'info')
 	await expect(page.locator('[data-task-metadata="done_at"]')).not.toHaveText('Not completed yet')
 
-	await page.locator('[data-detail-section-toggle="organization"]').click()
-	await expect(page.locator('[data-detail-section-toggle="organization"]')).toHaveAttribute('aria-expanded', 'true')
+	await expect(page.locator('[data-task-body] [data-detail-section="organization"]')).toBeVisible()
 	await page.locator('[data-detail-label-select]').selectOption('2')
 	await page.locator('[data-form="add-label"]').getByRole('button', {name: 'Add'}).click()
 	await expect(page.locator('.label-chip').filter({hasText: 'Personal'})).toHaveCount(1)
 
 	await page.locator('.label-chip').filter({hasText: 'Personal'}).locator('[data-action="remove-label"]').click()
 	await expect(page.locator('.label-chip').filter({hasText: 'Personal'})).toHaveCount(0)
-	await page.locator('[data-action="close-task-detail"]').click()
+	await page.locator('[data-action="close-focused-task"]').click()
 	await expect(page.locator('[data-detail-title]')).toHaveCount(0)
 	expect(pageErrors).toEqual([])
 })
@@ -279,7 +265,7 @@ test('root composer creates tasks and inline subtask composer creates subtasks',
 	await expect(page.locator('.workspace-screen.is-active .task-row').filter({hasText: 'Nested follow-up'})).toHaveCount(1)
 
 	await page.locator('.workspace-screen.is-active [data-task-row-id="102"] [data-action="open-task-focus"]').click()
-	await page.locator('[data-action="open-focused-task-detail"]').click()
+	await page.locator('.task-workspace-settings > summary').click()
 	await page.locator('[data-detail-section-toggle="related"]').click()
 	await page.locator('[data-action="open-detail-relation-composer"]').click()
 	await expect(page.locator('[data-form="detail-relation"]')).toBeVisible()
@@ -295,7 +281,7 @@ test('task detail renders avatars, marks tasks read, and toggles subscriptions',
 	await expect(page.getByRole('heading', {name: 'Work'})).toBeVisible()
 
 	await page.locator('.task-row').filter({hasText: 'Smoke suite rollout'}).locator('[data-action="open-task-focus"]').click()
-	await page.locator('[data-action="open-focused-task-detail"]').click()
+	await page.locator('.task-workspace-settings > summary').click()
 	await expect(page.locator('[data-detail-title]')).toHaveValue('Smoke suite rollout')
 
 	await expect
@@ -328,7 +314,7 @@ test('task comments can add and remove reactions', async ({page}) => {
 	await expect(page.getByRole('heading', {name: 'Work'})).toBeVisible()
 
 	await page.locator('.task-row').filter({hasText: 'Smoke suite rollout'}).locator('[data-action="open-task-focus"]').click()
-	await page.locator('[data-action="open-focused-task-detail"]').click()
+	await page.locator('.task-workspace-settings > summary').click()
 	await openTaskDetailSection(page, 'comments')
 
 	await page.locator('[data-action="toggle-comment-reaction-picker"][data-task-comment-id="1"]').click()
@@ -364,7 +350,7 @@ test('switching to initials updates the current-user avatar on task surfaces', a
 
 	const taskRow = page.locator('.task-row').filter({hasText: 'Prepare daily summary'})
 	await taskRow.locator('[data-action="open-task-focus"]').first().click()
-	await page.locator('[data-action="open-focused-task-detail"]').click()
+	await page.locator('.task-workspace-settings > summary').click()
 	await openTaskDetailSection(page, 'assignees')
 	await page.locator('[data-detail-assignee-search]').fill('smoke')
 	await page.locator('[data-action="add-task-assignee"][data-task-assignee-option="1"]').click()

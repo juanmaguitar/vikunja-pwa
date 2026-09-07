@@ -403,13 +403,13 @@ test('wide inspector opens for project and task selection and releases on menu n
 	await expect(page.locator('.shell-inspector-region')).toContainText('Project Detail')
 
 	await page.locator('[data-action="open-task-focus"][data-task-id="201"]').click()
-	await expect(page.locator('.shell-inspector-region')).toContainText('Task Detail')
+	await expect(page.locator('.shell-inspector-region')).toContainText('Task settings')
 
 	await page.getByRole('navigation', {name: 'Primary'}).getByRole('button', {name: 'Today'}).click()
 	await expect(page.locator('.shell-inspector-empty-state')).toContainText('Select a task or project to see details')
 })
 
-test('narrow desktop inspector wraps comment reactions without horizontal overflow', async ({page}) => {
+test('narrow desktop task body wraps comment reactions without horizontal overflow', async ({page}) => {
 	await page.setViewportSize({width: 1280, height: 900})
 	await page.evaluate(() => {
 		window.localStorage.setItem('vikunja-mobile-poc:wide-inspector-width', '296')
@@ -420,11 +420,10 @@ test('narrow desktop inspector wraps comment reactions without horizontal overfl
 
 	await openProject(page, 2, 'Work')
 	await page.locator('[data-action="open-task-focus"][data-task-id="201"]').click()
-	await expect(page.locator('.shell-inspector-region')).toContainText('Task Detail')
-	await page.locator('.shell-inspector-region [data-detail-section-toggle="comments"]').click()
-	await page.locator('.shell-inspector-region [data-action="toggle-comment-reaction-picker"][data-task-comment-id="1"]').click()
+	await expect(page.locator('.shell-inspector-region')).toContainText('Task settings')
+	await page.locator('[data-task-body] [data-action="toggle-comment-reaction-picker"][data-task-comment-id="1"]').click()
 
-	const commentRow = page.locator('.shell-inspector-region [data-task-comment="1"]')
+	const commentRow = page.locator('[data-task-body] [data-task-comment="1"]')
 	await expect(commentRow).toBeVisible()
 	await expect
 		.poll(() =>
@@ -514,5 +513,5 @@ test('desktop sidebar project drops block parent tasks with subtasks across proj
 	await expect(page.locator('.workspace-screen.is-active [data-task-row-id="204"]')).toBeVisible()
 	await page.waitForTimeout(700)
 	await page.locator('.workspace-screen.is-active [data-task-branch-id="203"] > .task-row [data-action="open-task-focus"]').click()
-	await expect(page.locator('.shell-inspector-region')).toContainText('Task Detail')
+	await expect(page.locator('.shell-inspector-region')).toContainText('Task settings')
 })

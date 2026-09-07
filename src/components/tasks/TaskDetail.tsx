@@ -5,7 +5,8 @@ import DetailSheet from '@/components/common/DetailSheet'
 import {defaultTaskFilters, taskMatchesProjectFilters} from '@/hooks/useFilters'
 import useWideLayout from '@/hooks/useWideLayout'
 import TaskDetailAttachments from './detail/TaskDetailAttachments'
-import CollapsibleSection from './detail/CollapsibleSection'
+import CollapsibleSection, {ExpandedTaskSections} from './detail/CollapsibleSection'
+import TaskDateControl from './detail/TaskDateControl'
 import TaskDetailComments from './detail/TaskDetailComments'
 import MetadataRow from './detail/MetadataRow'
 import TaskDetailOrganization from './detail/TaskDetailOrganization'
@@ -33,7 +34,8 @@ import {
 	type TaskDateField,
 	type TaskDetailSection,
 } from '@/utils/task-detail-helpers'
-import {type FormEvent, useEffect, useMemo, useRef, useState} from 'react'
+import {type FormEvent, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
+import {createPortal} from 'react-dom'
 
 const CLOSED_TASK_DETAIL_SECTIONS: Record<TaskDetailSection, boolean> = {
 	planning: false,
@@ -53,6 +55,20 @@ export default function TaskDetail({mode = 'sheet'}: {mode?: 'sheet' | 'inspecto
 	const taskDetailOpen = useAppStore(state => state.taskDetailOpen)
 	const taskDetailLoading = useAppStore(state => state.taskDetailLoading)
 	const taskDetail = useAppStore(state => state.taskDetail)
+	const focusedTaskId = useAppStore(state => state.focusedTaskId)
+	const focusedTaskSourceScreen = useAppStore(state => state.focusedTaskSourceScreen)
+	const [bodyTarget, setBodyTarget] = useState<HTMLElement | null>(null)
+	const [settingsTarget, setSettingsTarget] = useState<HTMLElement | null>(null)
+	// The focus screen owns the DOM slots; this single editor owns all drafts and mutations.
+	useLayoutEffect(() => {
+		const key = focusedTaskId && taskDetail?.id === focusedTaskId && taskDetailOpen
+			? `${focusedTaskSourceScreen}:${focusedTaskId}` : null
+		setBodyTarget(key ? document.querySelector<HTMLElement>(`[data-task-body="${key}"]`) : null)
+		setSettingsTarget(key ? document.querySelector<HTMLElement>(`[data-task-settings="${key}"]`) : null)
+	})
+	const primaryContent = (children: ReactNode, key: string) => bodyTarget
+		? createPortal(<ExpandedTaskSections.Provider value={true}>{children}</ExpandedTaskSections.Provider>, bodyTarget, key)
+		: children
 	const taskReactions = useAppStore(state => state.taskReactions)
 	const subscriptionsByEntity = useAppStore(state => state.subscriptionsByEntity)
 	const subscriptionMutatingKeys = useAppStore(state => state.subscriptionMutatingKeys)
@@ -719,13 +735,13 @@ export default function TaskDetail({mode = 'sheet'}: {mode?: 'sheet' | 'inspecto
 		'copiedto',
 	] as TaskRelationKind[]
 
-	return (
-		<DetailSheet open={taskDetailOpen} closeAction="close-task-detail" onClose={closeTaskDetail} mode={mode} variant="page" title={taskDetail ? taskDetail.title : 'Task'}>
+	const detail = (
+		<DetailSheet open={taskDetailOpen} closeAction="close-task-detail" onClose={closeTaskDetail} mode={bodyTarget ? 'inspector' : mode} variant="page" title={taskDetail ? taskDetail.title : 'Task'}>
 			<div className="sheet-head detail-sheet-head">
 				{/* Only the inspector lacks a topbar to show the title. */}
 				{mode === 'inspector' ? (
 					<div>
-						<div className="panel-label">Task Detail</div>
+						<div className="panel-label">{bodyTarget ? 'Task settings' : 'Task Detail'}</div>
 						<div className="panel-title">{taskDetail ? taskDetail.title : 'Loading…'}</div>
 					</div>
 				) : null}
@@ -746,7 +762,7 @@ export default function TaskDetail({mode = 'sheet'}: {mode?: 'sheet' | 'inspecto
 			{taskDetailLoading && !taskDetail ? <div className="empty-state">Loading task details…</div> : null}
 			{taskDetail ? (
 				<>
-					{previewAttachment ? (
+					{previewAttachment ? createPortal(
 						<div className="detail-media-viewer" data-detail-media-viewer>
 							<button
 								className="detail-media-viewer-backdrop"
@@ -778,8 +794,8 @@ export default function TaskDetail({mode = 'sheet'}: {mode?: 'sheet' | 'inspecto
 								</div>
 							</div>
 						</div>
-					) : null}
-					<div className="detail-core-card">
+					, document.body) : null}
+					{primaryContent(<div className="detail-core-card">
 						<div className="detail-grid detail-grid-tight">
 							<label className="detail-item detail-item-full detail-field">
 								<div className="detail-label">Title</div>
@@ -839,8 +855,9 @@ export default function TaskDetail({mode = 'sheet'}: {mode?: 'sheet' | 'inspecto
 									<span>{taskDetail.is_favorite ? 'In favorites' : 'Add to favorites'}</span>
 								</button>
 							</div>
+							{bodyTarget ? <TaskDateControl field="due_date" label="Due" task={taskDetail} onClear={field => void clearDate(field)} onChange={handleDateChange} /> : null}
 						</div>
-					</div>
+					</div>, 'core')}
 					<div className="detail-section-list">
 						<TaskDetailRelated
 							open={openSections.related}
@@ -921,7 +938,7 @@ export default function TaskDetail({mode = 'sheet'}: {mode?: 'sheet' | 'inspecto
 								void handleClearRecurring()
 							}}
 						/>
-						<TaskDetailOrganization
+						{primaryContent(<div className="task-primary-sections"><TaskDetailOrganization
 							organizationOpen={openSections.organization}
 							assigneesOpen={openSections.assignees}
 							onToggle={toggleSection}
@@ -945,6 +962,24 @@ export default function TaskDetail({mode = 'sheet'}: {mode?: 'sheet' | 'inspecto
 								void handleRemoveAssignee(userId)
 							}}
 						/>
+						<CollapsibleSection
+							title="Description"
+							section="description"
+							open={openSections.description}
+							onToggle={toggleSection}
+						>
+							<label className="detail-description-field">
+								<textarea
+									className="detail-textarea"
+									data-detail-description
+									placeholder="No description"
+									aria-label="Notes"
+									value={description}
+									onChange={event => setDescription(event.currentTarget.value)}
+									onBlur={() => void handleDescriptionBlur()}
+								/>
+							</label>
+						</CollapsibleSection>
 						<TaskDetailComments
 							open={openSections.comments}
 							onToggle={toggleSection}
@@ -985,23 +1020,8 @@ export default function TaskDetail({mode = 'sheet'}: {mode?: 'sheet' | 'inspecto
 								void handleRemoveAttachment(attachmentId)
 							}}
 						/>
-						<CollapsibleSection
-							title="Description"
-							section="description"
-							open={openSections.description}
-							onToggle={toggleSection}
-						>
-							<label className="detail-description-field">
-								<textarea
-									className="detail-textarea"
-									data-detail-description
-									placeholder="No description"
-									value={description}
-									onChange={event => setDescription(event.currentTarget.value)}
-									onBlur={() => void handleDescriptionBlur()}
-								/>
-							</label>
-						</CollapsibleSection>
+
+						</div>, 'sections')}
 						<CollapsibleSection
 							title="Info"
 							section="info"
@@ -1033,4 +1053,5 @@ export default function TaskDetail({mode = 'sheet'}: {mode?: 'sheet' | 'inspecto
 			) : null}
 		</DetailSheet>
 	)
+	return bodyTarget && settingsTarget && !isWideLayout ? createPortal(detail, settingsTarget) : detail
 }

@@ -1,6 +1,8 @@
-import type {ReactNode} from 'react'
+import {createContext, useContext, type ReactNode} from 'react'
 import Caret from '@/components/common/Caret'
 import type {TaskDetailSection} from '@/utils/task-detail-helpers'
+
+export const ExpandedTaskSections = createContext(false)
 
 export default function CollapsibleSection({
 	title,
@@ -15,6 +17,15 @@ export default function CollapsibleSection({
 	onToggle: (section: TaskDetailSection) => void
 	children: ReactNode
 }) {
+	const expanded = useContext(ExpandedTaskSections)
+	if (expanded) {
+		return (
+			<section className="detail-section task-body-section is-open" data-detail-section={section}>
+				<h3 className="task-body-section-title">{section === 'organization' ? 'Labels' : section === 'description' ? 'Notes' : title}</h3>
+				<div className="detail-section-content">{children}</div>
+			</section>
+		)
+	}
 	return (
 		<section className={`detail-section ${open ? 'is-open' : ''}`.trim()} data-detail-section={section}>
 			<button

@@ -21,7 +21,7 @@ import useWideLayout, {useCompactWideLayout} from '@/hooks/useWideLayout'
 import {shouldSuppressDragClicks, useSortableBridge} from '@/hooks/useDragAndDrop'
 import {getProjectDescendantIds} from '@/store/project-helpers'
 import useGlobalShortcuts from '@/hooks/useGlobalShortcuts'
-import {memo, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
+import {memo, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
 import {useLocation, useNavigate} from 'react-router-dom'
 import {useAppStore} from '@/store'
 import type {Screen} from '@/types'
@@ -862,7 +862,8 @@ export default function AppShell() {
 								aria-label="Close detail"
 								onClick={() => {
 									if (taskDetailOpen) {
-										closeTaskDetail()
+										if (focusedTaskStack.length) setWideInspectorCollapsed(true)
+										else closeTaskDetail()
 										return
 									}
 
@@ -875,8 +876,7 @@ export default function AppShell() {
 							</button>
 						) : null}
 					</div>
-					{effectiveWideInspectorCollapsed ? null : (
-						<div className="shell-inspector-scroll">
+					<div className="shell-inspector-scroll" hidden={effectiveWideInspectorCollapsed}>
 							{detailOpen ? (
 								<>
 									{projectDetailOpen ? <ProjectDetail mode="inspector" /> : null}
@@ -889,7 +889,6 @@ export default function AppShell() {
 								</div>
 							)}
 						</div>
-					)}
 				</aside>
 			) : null}
 			{showWideShell || linkShareAuth ? null : <BottomNav />}
@@ -961,12 +960,12 @@ function usePersistentWideShellState(key: string, fallback: boolean) {
 	})
 	const [stored, setStored] = useState(hasStoredValue)
 
-	const setPersistentValue: Dispatch<SetStateAction<boolean>> = nextValue => {
+	const setPersistentValue: Dispatch<SetStateAction<boolean>> = useCallback(nextValue => {
 		setStored(true)
 		setValue(currentValue =>
 			typeof nextValue === 'function' ? (nextValue as (value: boolean) => boolean)(currentValue) : nextValue,
 		)
-	}
+	}, [])
 
 	useEffect(() => {
 		if (typeof window === 'undefined') {

@@ -31,7 +31,7 @@ test('desktop starts with room for tasks and opens the inspector on selection', 
 	await expect(page.locator('.shell-inspector-region')).toHaveClass(/has-detail/)
 	await expect(page.locator('.shell')).not.toHaveClass(/has-collapsed-inspector/)
 	await page.getByRole('button', {name: 'Close detail', exact: true}).click()
-	await page.getByRole('button', {name: 'Collapse detail pane', exact: true}).click()
+	await expect(page.locator('.shell')).toHaveClass(/has-collapsed-inspector/)
 	await page.reload()
 	await expect(page.locator('.shell')).toHaveClass(/has-collapsed-inspector/)
 })

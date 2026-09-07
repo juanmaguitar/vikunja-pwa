@@ -5,6 +5,17 @@ Vikunja API and authentication flows. Task lists, navigation, sign-in, and both
 colour themes share the blue/slate palette. The desktop inspector starts
 collapsed for a new browser and opens when a task or project is selected.
 
+Selecting a task now exposes title, project, completion/favorite state, due date,
+labels, assignees, notes, comments, and attachments in the central task body.
+Related tasks, planning, reminders, recurrence, and audit metadata remain in the
+inspector (under **Task settings** on mobile). Essential sections do not need
+expanding. Notes save on blur; comments have an explicit submit action.
+
+One task editor owns the drafts and mutations, using React portals to place
+essential fields in the focused screen. Collapsing the inspector keeps that
+editor mounted. Attachment previews use a body-level portal so hidden settings
+cannot hide the viewer. Returning to the collection closes the mobile editor.
+
 ## Try it
 
 Open <https://coolify-vps.tail96bc47.ts.net:8450> with Tailscale connected and sign
@@ -56,11 +67,21 @@ npm run build
 npx playwright test tests/smoke/react-design.react.smoke.spec.js tests/smoke/react-auth.react.smoke.spec.js tests/smoke/react-tasks.react.smoke.spec.js tests/smoke/ui.smoke.spec.js
 npx playwright test tests/smoke/react-dnd.react.smoke.spec.js
 npm run test:unit
+npx playwright test tests/smoke/react-task-workspace.react.smoke.spec.js tests/smoke/react-task-detail.react.smoke.spec.js
 ```
 
 The design tests exercise the initial inspector state, selection and persistence,
 mobile task completion/navigation, and sign-in layout at 390px and 1440px in both
 themes. They save screenshots in `test-results/playwright-artifacts`.
+
+Task workspace tests cover notes/comments, labels/assignees, clearing and setting
+due dates, uploading/previewing attachments, collapsed-inspector persistence,
+and switching tasks at 390px and 1440px. The existing detail suite still covers
+advanced planning, reminders, recurrence, subscriptions, and comment reactions.
+Standalone `tsc --noEmit` has existing errors on the preceding commit as well
+(including reminders, views, and security types); it is not currently a clean
+project-wide validation gate. Vite build, lint, and the targeted browser suites
+pass for this update.
 
 Sidebar drops defer the optimistic move until the pointerup/mouseup/click event
 sequence finishes. Otherwise removing the dragged node can leave Sortable's
