@@ -433,7 +433,7 @@ export function createMockFixture(referenceDate = new Date()) {
 				comments: [
 					{
 						id: 1,
-						comment: 'Proxy route is ready for smoke verification.',
+						comment: '<p><em>Proxy route</em> is ready for smoke verification.</p><p><mention-user data-id="Smoke User" data-label="Smoke User" data-mention-suggestion-char="@"></mention-user> please check the screenshot.</p><img data-src="https://tareas.example.test/api/v1/tasks/201/attachments/1" src="#" id="tiptap-image-201-1">',
 						author: {
 							id: 1,
 							name: 'Smoke User',

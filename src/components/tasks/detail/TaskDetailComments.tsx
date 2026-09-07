@@ -1,7 +1,7 @@
 import UserAvatar from '@/components/common/UserAvatar'
 import type {ReactionMap, TaskComment, TaskReaction} from '@/types'
 import {formatLongDate, getUserDisplayName} from '@/utils/formatting'
-import {type FormEvent, useState} from 'react'
+import {Fragment, createElement, type FormEvent, type ReactNode, useMemo, useState} from 'react'
 import type {TaskDetailSection} from '@/utils/task-detail-helpers'
 import CollapsibleSection from './CollapsibleSection'
 
@@ -45,6 +45,10 @@ export default function TaskDetailComments({
 	onRemoveReaction: (commentId: number, value: string) => void
 }) {
 	const [pickerCommentId, setPickerCommentId] = useState<number | null>(null)
+	const renderedComments = useMemo(
+		() => new Map(taskComments.map(comment => [comment.id, renderCommentContent(comment.comment)])),
+		[taskComments],
+	)
 
 	return (
 		<CollapsibleSection title="Comments" section="comments" open={open} onToggle={onToggle}>
@@ -124,7 +128,7 @@ export default function TaskDetailComments({
 								) : (
 									<>
 										<div className="detail-comment-body">
-											{comment.comment || 'No comment text'}
+											{renderedComments.get(comment.id) || 'No comment text'}
 										</div>
 										<div className="detail-inline-actions">
 											{groupedReactions.map(reaction => (
@@ -201,6 +205,107 @@ export default function TaskDetailComments({
 	)
 }
 
+const inlineCommentTags = new Set(['strong', 'b', 'em', 'i', 'code', 's'])
+const blockCommentTags = new Set(['p', 'ul', 'ol', 'li', 'blockquote', 'pre'])
+
+function renderCommentContent(rawComment: string) {
+	const comment = `${rawComment || ''}`.trim()
+	if (!comment) {
+		return null
+	}
+
+	if (!looksLikeHtml(comment) || typeof DOMParser === 'undefined') {
+		return comment
+	}
+
+	const doc = new DOMParser().parseFromString(comment, 'text/html')
+	const children = [...doc.body.childNodes].map((node, index) => renderCommentNode(node, `comment-${index}`)).filter(Boolean)
+	return children.length > 0 ? children : comment
+}
+
+function renderCommentNode(node: ChildNode, key: string): ReactNode {
+	if (node.nodeType === Node.TEXT_NODE) {
+		return node.textContent
+	}
+
+	if (node.nodeType !== Node.ELEMENT_NODE) {
+		return null
+	}
+
+	const element = node as Element
+	const tagName = element.tagName.toLowerCase()
+
+	if (tagName === 'br') {
+		return <br key={key} />
+	}
+
+	if (tagName === 'mention-user') {
+		const label = element.getAttribute('data-label') || element.textContent || element.getAttribute('data-id') || 'user'
+		const mentionLabel = label.trim().startsWith('@') ? label.trim() : `@${label.trim()}`
+		return <span key={key} className="detail-comment-mention">{mentionLabel}</span>
+	}
+
+	if (tagName === 'a') {
+		const href = normalizeCommentUrl(element.getAttribute('href'))
+		const children = renderCommentChildren(element, key)
+		if (!href) {
+			return <Fragment key={key}>{children}</Fragment>
+		}
+		return (
+			<a key={key} href={href} target="_blank" rel="noreferrer">
+				{children.length > 0 ? children : href}
+			</a>
+		)
+	}
+
+	if (tagName === 'img') {
+		const imageUrl = normalizeCommentUrl(element.getAttribute('data-src') || element.getAttribute('src'))
+		if (!imageUrl) {
+			return null
+		}
+		return (
+			<a key={key} className="detail-comment-attachment-preview" data-comment-attachment-preview href={imageUrl} target="_blank" rel="noreferrer">
+				Image attachment
+			</a>
+		)
+	}
+
+	const children = renderCommentChildren(element, key)
+	if (inlineCommentTags.has(tagName)) {
+		const InlineTag = tagName === 'b' ? 'strong' : tagName === 'i' ? 'em' : tagName
+		return createElement(InlineTag, {key}, children)
+	}
+
+	if (blockCommentTags.has(tagName)) {
+		const BlockTag = tagName
+		return createElement(BlockTag, {key}, children)
+	}
+
+	return <Fragment key={key}>{children}</Fragment>
+}
+
+function renderCommentChildren(element: Element, key: string) {
+	return [...element.childNodes].map((child, index) => renderCommentNode(child, `${key}-${index}`)).filter(Boolean)
+}
+
+function looksLikeHtml(value: string) {
+	return /<\/?[a-z][\s\S]*>/i.test(value)
+}
+
+function normalizeCommentUrl(value: string | null) {
+	const url = `${value || ''}`.trim()
+	if (!url || url === '#') {
+		return ''
+	}
+
+	try {
+		const parsed = new URL(url, window.location.origin)
+		return ['http:', 'https:'].includes(parsed.protocol) ? parsed.toString() : ''
+	} catch {
+		return ''
+	}
+}
+
 function groupReactions(reactions: ReactionMap[string] | Record<string, Array<Record<string, unknown>>> | null | undefined, currentUserId: number) {
 	const grouped = new Map<string, {value: string; count: number; mine: boolean}>()
 	for (const reaction of normalizeReactionEntries(reactions)) {
@@ -248,7 +353,7 @@ function normalizeReactionEntries(
 
 			normalized.push({
 				value: `${value || ''}`.trim(),
-				user: user as TaskReaction['user'],
+				user: user as unknown as TaskReaction['user'],
 			})
 		}
 	}

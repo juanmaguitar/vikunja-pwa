@@ -295,6 +295,11 @@ test('task detail renders avatars, marks tasks read, and toggles subscriptions',
 	await expect(page.locator('[data-task-assignee="2"] img.user-avatar')).toHaveCount(1)
 	await openTaskDetailSection(page, 'comments')
 	await expect(page.locator('[data-task-comment="1"] img.user-avatar')).toHaveCount(1)
+	const richComment = page.locator('[data-task-comment="1"] .detail-comment-body')
+	await expect(richComment).toContainText('Proxy route is ready for smoke verification.')
+	await expect(richComment).toContainText('@Smoke User')
+	await expect(richComment).not.toContainText('<p>')
+	await expect(richComment.locator('[data-comment-attachment-preview]')).toBeVisible()
 
 	await expect(page.locator('[data-action="toggle-task-subscription"]')).toHaveText('Subscribed')
 	await page.locator('[data-action="toggle-task-subscription"]').click()

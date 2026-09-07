@@ -25,6 +25,7 @@ export default function UpcomingScreen() {
 			menuAction="toggle-upcoming-menu"
 			sourceScreen="upcoming"
 			taskList={upcomingTasks}
+			taskSortBy="due_date"
 			title="Upcoming"
 			onOpenComposer={() => openRootComposer({placement: 'center'})}
 		/>

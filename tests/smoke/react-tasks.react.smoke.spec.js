@@ -161,6 +161,22 @@ test('upcoming subtasks expand and collapse', async ({page}) => {
 	await expect(page.locator('.workspace-screen.is-active .task-row').filter({hasText: 'Verify nested task rendering'})).toHaveCount(0)
 })
 
+test('upcoming tasks are sorted by due date by default', async ({page}) => {
+	await page.locator('[data-action="toggle-screen-menu"]').click()
+	await page.locator('[data-action="go-upcoming"]').click()
+	await expect(page.getByRole('heading', {name: 'Upcoming'})).toBeVisible()
+
+	const titles = await page.locator('.workspace-screen.is-active .task-row .task-title').evaluateAll(elements =>
+		elements.slice(0, 4).map(element => element.textContent?.trim()),
+	)
+	expect(titles).toEqual([
+		'Smoke suite rollout',
+		'Backend proxy coverage',
+		'Release checklist',
+		'Book flights',
+	])
+})
+
 test('inbox show completed reveals completed inbox tasks', async ({page}) => {
 	await page.getByRole('button', {name: 'Inbox'}).click()
 	await expect(page.getByRole('heading', {name: 'Inbox'})).toBeVisible()

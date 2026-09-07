@@ -9,6 +9,7 @@ import {useShowCompletedTaskFilter} from '@/hooks/useShowCompleted'
 import {useAppStore} from '@/store'
 import {getVisibleRootTasksFor} from '@/store/selectors'
 import type {Screen, Task} from '@/types'
+import type {TaskSortBy} from '@/hooks/useFilters'
 import {getMenuAnchor} from '@/utils/menuPosition'
 import {useMemo, useState} from 'react'
 
@@ -23,6 +24,7 @@ interface CollectionScreenProps {
 	sourceScreen: Extract<Screen, 'today' | 'inbox' | 'upcoming'>
 	taskList: Task[]
 	taskListEnabled?: boolean
+	taskSortBy?: TaskSortBy | null
 	title: string
 	unavailableMessage?: string | null
 }
@@ -38,6 +40,7 @@ export default function CollectionScreen({
 	sourceScreen,
 	taskList,
 	taskListEnabled = true,
+	taskSortBy = null,
 	title,
 	unavailableMessage = null,
 }: CollectionScreenProps) {
@@ -49,12 +52,13 @@ export default function CollectionScreen({
 	const bulkMode = useAppStore(state => state.bulkTaskEditorScope === bulkScopeKey)
 	const {showingCompleted, label: completedLabel, toggle: toggleShowCompleted} = useShowCompletedTaskFilter(true)
 	const [panelAnchor, setPanelAnchor] = useState<ReturnType<typeof getMenuAnchor> | null>(null)
+	const activeTaskSortBy = taskSortBy || taskFilters.sortBy
 
 	const taskMatcher = useMemo(
 		() => (task: Task) => taskMatchesFilters(task, taskFilters) || recentlyCompletedTaskIds.has(task.id),
 		[recentlyCompletedTaskIds, taskFilters],
 	)
-	const rootTasks = getVisibleRootTasksFor(taskList, taskMatcher, taskFilters.sortBy)
+	const rootTasks = getVisibleRootTasksFor(taskList, taskMatcher, activeTaskSortBy)
 	const showFocusedTask = Boolean(focusedTaskId && focusedTaskSourceScreen === sourceScreen)
 	const collectionDescription = {
 		today: 'Due today and overdue',
@@ -145,7 +149,7 @@ export default function CollectionScreen({
 								taskList={taskList}
 								compact={compact}
 								matcher={taskMatcher}
-								sortBy={taskFilters.sortBy}
+								sortBy={activeTaskSortBy}
 								bulkMode={bulkMode}
 							/>
 						) : null}
