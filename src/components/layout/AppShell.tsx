@@ -62,7 +62,7 @@ function screenFromPath(pathname: string): Screen {
 	return 'settings'
 }
 
-const DEFAULT_WIDE_SIDEBAR_WIDTH = 304
+const DEFAULT_WIDE_SIDEBAR_WIDTH = 272
 const DEFAULT_WIDE_INSPECTOR_WIDTH = 432
 const MIN_WIDE_PANE_WIDTH = 240
 const MAX_WIDE_PANE_WIDTH = 520
@@ -160,7 +160,7 @@ export default function AppShell() {
 	)
 	const [wideInspectorCollapsed, setWideInspectorCollapsed, wideInspectorCollapsedStored] = usePersistentWideShellState(
 		'vikunja-mobile-poc:wide-inspector-collapsed',
-		false,
+		true,
 	)
 	const [wideSidebarWidth, setWideSidebarWidth, wideSidebarWidthStored] = usePersistentWideShellSize(
 		'vikunja-mobile-poc:wide-sidebar-width',

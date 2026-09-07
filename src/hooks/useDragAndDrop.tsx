@@ -712,7 +712,10 @@ function handleSidebarDropPointerUp(event: PointerEvent) {
 		type: sidebarDropContext.type,
 		id: sidebarDropContext.id,
 	}
-	void commitSidebarProjectDrop(sidebarDropContext)
+	// Keep the dragged DOM node alive through mouseup and the trailing click.
+	// Removing it during pointerup can prevent that click from being emitted,
+	// leaving Sortable's fallback click guard to swallow the next navigation.
+	window.setTimeout(() => void commitSidebarProjectDrop(sidebarDropContext), 0)
 }
 
 function blockDragClick(event: Event) {

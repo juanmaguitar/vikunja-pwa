@@ -56,6 +56,11 @@ export default function CollectionScreen({
 	)
 	const rootTasks = getVisibleRootTasksFor(taskList, taskMatcher, taskFilters.sortBy)
 	const showFocusedTask = Boolean(focusedTaskId && focusedTaskSourceScreen === sourceScreen)
+	const collectionDescription = {
+		today: 'Due today and overdue',
+		inbox: 'Captured here. Ready to organise.',
+		upcoming: 'A look at what comes next',
+	}[sourceScreen]
 
 	if (showFocusedTask) {
 		return <TaskFocusScreen sourceScreen={sourceScreen} />
@@ -123,6 +128,14 @@ export default function CollectionScreen({
 						</div>
 					</div>
 					<div className="screen-body">
+						<div className="collection-context">
+							<span>{collectionDescription}</span>
+							{sourceScreen === 'today' ? (
+								<time dateTime={new Date().toLocaleDateString('en-CA')}>
+									{new Intl.DateTimeFormat('en', {weekday: 'short', month: 'short', day: 'numeric'}).format(new Date())}
+								</time>
+							) : null}
+						</div>
 						<BulkTaskEditor scopeKey={bulkScopeKey} />
 						<InlineRootTaskComposer />
 						{unavailableMessage ? <div className="empty-state">{unavailableMessage}</div> : null}

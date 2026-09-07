@@ -120,38 +120,32 @@ export default function AuthScreen() {
 				<section className="auth-hero">
 					<div className="auth-brand">
 						<div className="auth-logo-mark" aria-hidden="true">
-							<div className="auth-logo-mark-core">V</div>
+							<div className="auth-logo-mark-core">✓</div>
 						</div>
 						<div className="auth-brand-copy">
-							<div className="eyebrow">Unofficial Vikunja client</div>
-							<h1>A focused client for your Vikunja workspace.</h1>
+							<div className="auth-wordmark">tareas <span>v2</span></div>
+							<h1>Your day, in order.</h1>
 							<p>
-								An independent PWA that connects to Vikunja servers for projects, tasks, comments,
-								attachments, and detail-heavy work across phone, tablet, and desktop.
+								Capture a thought. Pick your next task. Keep your projects moving.
 							</p>
 						</div>
 					</div>
-					<div className="auth-identity-slot">
-						<div className="detail-label">Identity-ready shell</div>
-						<div className="auth-identity-card flat-surface">
-							<div className="auth-identity-line auth-identity-line-wide"></div>
-							<div className="auth-identity-line"></div>
-							<div className="auth-identity-chip-row">
-								<span className="count-chip compact">Projects</span>
-								<span className="count-chip compact">Tasks</span>
-								<span className="count-chip compact">Details</span>
-							</div>
-						</div>
+					<div className="auth-day-preview" aria-hidden="true">
+						<div className="auth-preview-heading"><span>Today</span><span>A little progress</span></div>
+						<div className="auth-preview-task is-finished"><span className="auth-preview-check">✓</span><span>Plan the week<small>Personal</small></span></div>
+						<div className="auth-preview-task"><span className="auth-preview-check" /><span>Make time for the next idea<small>Projects</small></span></div>
+						<div className="auth-preview-task"><span className="auth-preview-check" /><span>Pick up a few things for home<small>Family</small></span></div>
+						<div className="auth-preview-add">+ What needs doing?</div>
 					</div>
+					<p className="auth-attribution">An independent client for Vikunja.</p>
 				</section>
 
 				<section className="auth-card">
 					<div className="auth-card-head">
 						<div>
-							{showTotpLoginStep ? null : <div className="detail-label">Welcome</div>}
 							<h2>Connect to your Vikunja server</h2>
 							{showTotpLoginStep ? null : (
-								<p>This app is an independent client and is not affiliated with the official Vikunja project.</p>
+								<p>Sign in to pick up where you left off.</p>
 							)}
 						</div>
 					</div>
@@ -198,12 +192,12 @@ export default function AuthScreen() {
 									</>
 								) : (
 									<>
-										<div className="detail-label">Connect Account</div>
 										<div className="settings-toggle-row">
 											<button
 												className={`pill-button ${showPasswordForm ? '' : 'subtle'}`.trim()}
 												data-action="set-account-auth-mode"
 												data-auth-mode="password"
+												aria-pressed={showPasswordForm}
 												type="button"
 												onClick={() => setAccountAuthMode('password')}
 											>
@@ -213,6 +207,7 @@ export default function AuthScreen() {
 												className={`pill-button ${showPasswordForm ? 'subtle' : ''}`.trim()}
 												data-action="set-account-auth-mode"
 												data-auth-mode="apiToken"
+												aria-pressed={!showPasswordForm}
 												type="button"
 												onClick={() => setAccountAuthMode('apiToken')}
 											>
@@ -280,7 +275,7 @@ export default function AuthScreen() {
 															<span>Stay logged in</span>
 														</label>
 														<div className="detail-helper-text">
-															Uses Vikunja&apos;s native remembered-session mode for password sign-in.
+															On this device.
 														</div>
 													</div>
 												</>
@@ -366,15 +361,6 @@ export default function AuthScreen() {
 										{showPasswordForm && normalizedAuthCapabilityBaseUrl && localPasswordEnabled === false ? (
 											<div className="empty-state compact">
 												Local username/password sign-in is disabled on this Vikunja instance.
-											</div>
-										) : null}
-										<div className="empty-state compact">
-											Password login is recommended for self-hosted Vikunja. API tokens are proxied through this
-											backend and are never stored in browser storage.
-										</div>
-										{showPasswordForm ? (
-											<div className="empty-state compact">
-												Remembered sessions still depend on the upstream Vikunja server keeping a fixed JWT secret across restarts.
 											</div>
 										) : null}
 									</>

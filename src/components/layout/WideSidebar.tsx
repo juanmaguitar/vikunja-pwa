@@ -138,6 +138,10 @@ export default function WideSidebar({collapsed, onToggleCollapsed}: WideSidebarP
 
 	return (
 		<aside className={`wide-sidebar ${collapsed ? 'is-collapsed' : ''}`.trim()}>
+			<div className="sidebar-brand" aria-label="Tareas version 2">
+				<span className="sidebar-brand-mark" aria-hidden="true">✓</span>
+				{collapsed ? null : <><span>tareas</span><span className="sidebar-version">v2</span></>}
+			</div>
 			<div className="wide-sidebar-user">
 				{collapsed ? null : (
 					<button
@@ -186,6 +190,8 @@ export default function WideSidebar({collapsed, onToggleCollapsed}: WideSidebarP
 								className={`wide-sidebar-nav-item ${active ? 'is-active' : ''}`.trim()}
 								type="button"
 								title={collapsed ? item.label : undefined}
+								aria-label={item.label}
+								aria-current={active ? 'page' : undefined}
 								data-active={active ? 'true' : undefined}
 								onClick={() => goTo(item.path)}
 							>
@@ -195,9 +201,7 @@ export default function WideSidebar({collapsed, onToggleCollapsed}: WideSidebarP
 								{collapsed ? null : (
 									<>
 										<span className="wide-sidebar-nav-label">{item.label}</span>
-										<span className="wide-sidebar-nav-key" aria-hidden="true">
-											{item.short}
-										</span>
+										{item.short === '/' ? <span className="wide-sidebar-nav-key" aria-hidden="true">/</span> : null}
 									</>
 								)}
 							</button>

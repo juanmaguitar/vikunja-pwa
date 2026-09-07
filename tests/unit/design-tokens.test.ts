@@ -81,12 +81,15 @@ test('calendar structural planes use the page background --bg', () => {
 })
 
 test('dark hairlines are lifted at or above the light ramp', () => {
+	const [darkRoot] = ruleBodies(':root[data-theme="dark"]')
 	const [lightRoot] = ruleBodies(':root[data-theme="light"]')
+	assert.ok(darkRoot, 'expected a :root[data-theme="dark"] block')
 	assert.ok(lightRoot, 'expected a :root[data-theme="light"] block')
 	for (const token of ['--hairline', '--hairline-2', '--stroke']) {
-		// Dark tokens live in the default :root block as white rgba; light uses black rgba.
-		const dark = Number(css.match(new RegExp(`${token}:\\s*rgba\\(255,\\s*255,\\s*255,\\s*([\\d.]+)\\)`))?.[1])
-		const light = Number(lightRoot.match(new RegExp(`${token}:\\s*rgba\\(0,\\s*0,\\s*0,\\s*([\\d.]+)\\)`))?.[1])
+		// Compare opacity independently of hue: v2 uses blue-grey dark hairlines.
+		const alpha = new RegExp(`${token}:\\s*rgba\\(\\d+,\\s*\\d+,\\s*\\d+,\\s*([\\d.]+)\\)`)
+		const dark = Number(darkRoot.match(alpha)?.[1])
+		const light = Number(lightRoot.match(alpha)?.[1])
 		assert.ok(Number.isFinite(dark), `dark ${token} alpha not found`)
 		assert.ok(Number.isFinite(light), `light ${token} alpha not found`)
 		assert.ok(dark >= light, `dark ${token} (${dark}) must be >= light (${light})`)
