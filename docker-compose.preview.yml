@@ -10,7 +10,7 @@ services:
     environment:
       HOST: 0.0.0.0
       PORT: "4300"
-      APP_PUBLIC_ORIGIN: https://coolify-vps.tail96bc47.ts.net:8450
+      APP_PUBLIC_ORIGIN: https://coolify-vps.tail96bc47.ts.net:8451
       APP_TRUST_PROXY: "true"
       COOKIE_SECURE: "true"
       VIKUNJA_DEFAULT_BASE_URL: https://tareas.juanma.rocks

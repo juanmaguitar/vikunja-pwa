@@ -18,7 +18,7 @@ cannot hide the viewer. Returning to the collection closes the mobile editor.
 
 ## Try it
 
-Open <https://coolify-vps.tail96bc47.ts.net:8450> with Tailscale connected and sign
+Open <https://coolify-vps.tail96bc47.ts.net:8451> with Tailscale connected and sign
 in with your existing Vikunja account. This is a separate app origin with its own
 session volume and browser cache. **It uses your real Vikunja data:** edits here
 also appear in the original clients.
@@ -34,7 +34,7 @@ Source directory on the host: `/opt/tareas-v2-preview`.
 ```sh
 cd /opt/tareas-v2-preview
 docker compose -f docker-compose.preview.yml up -d --build --wait
-tailscale serve --bg --https=8450 http://127.0.0.1:8288
+tailscale serve --bg --https=8451 http://127.0.0.1:8288
 docker compose -f docker-compose.preview.yml ps
 curl --fail http://127.0.0.1:8288/health
 ```
@@ -44,7 +44,9 @@ Before shipping a new source archive, run
 checkout and include `build-info.json` alongside it. The existing Dockerfile
 preserves that stamp during the build.
 
-Docker publishes only on loopback. Tailscale terminates HTTPS on port 8450.
+Docker publishes only on loopback. Tailscale terminates HTTPS on port 8451.
+The earlier 8450 preview route was reassigned to the family calendar during
+development; do not overwrite that route when deploying this app.
 The app has no preconfigured API token or admin bridge; each person signs in.
 The preview stores its own encrypted sessions in the project-scoped
 `preview_sessions` volume. Both Docker and Tailscale Serve persist across reboots.
@@ -52,7 +54,7 @@ The preview stores its own encrypted sessions in the project-scoped
 To stop just this preview while retaining its sessions:
 
 ```sh
-tailscale serve --https=8450 off
+tailscale serve --https=8451 off
 cd /opt/tareas-v2-preview
 docker compose -f docker-compose.preview.yml stop
 ```
