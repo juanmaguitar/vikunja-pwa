@@ -395,7 +395,7 @@ test('focused project tasks keep the project shell background when task focus op
 	await page.goto(`${stack.appUrl}/projects/2`)
 	await expect(page.getByRole('heading', {name: 'Work'})).toBeVisible()
 	await page.locator('.task-row').filter({hasText: 'Smoke suite rollout'}).locator('[data-action="open-task-focus"]').click()
-	await expect(page.locator('.task-focus-summary-title').filter({hasText: 'Smoke suite rollout'})).toBeVisible()
+	await expect(page.locator('[data-task-body] [data-detail-title]')).toHaveValue('Smoke suite rollout')
 
 	const shellBackground = page.locator('[data-project-background-surface="shell"]').first()
 	await expect(shellBackground).toHaveAttribute('data-has-background', 'true')
@@ -722,9 +722,9 @@ test('gantt renders dependency arrows and drag release does not open task focus'
 
 	await ganttBar.locator('[data-action="toggle-gantt-task-menu"]').click()
 	await page.locator('[data-action="open-gantt-task-focus"][data-task-id="201"]').click()
-	await expect(page.locator('.task-focus-summary-title').filter({hasText: 'Smoke suite rollout'})).toBeVisible()
+	await expect(page.locator('[data-task-body] [data-detail-title]')).toHaveValue('Smoke suite rollout')
 	await page.locator('[data-action="close-focused-task"]').click()
-	await expect(page.locator('.task-focus-summary-title').filter({hasText: 'Smoke suite rollout'})).toHaveCount(0)
+	await expect(page.locator('[data-task-body]')).toHaveCount(0)
 
 	const barBox = await ganttBar.boundingBox()
 	expect(barBox).not.toBeNull()
@@ -780,11 +780,11 @@ test('switching projects closes out-of-scope focused tasks without crashing the 
 	await expect(page.getByRole('heading', {name: 'Work'})).toBeVisible()
 
 	await page.locator('.task-row').filter({hasText: 'Smoke suite rollout'}).locator('[data-action="open-task-focus"]').click()
-	await expect(page.locator('.task-focus-summary-title').filter({hasText: 'Smoke suite rollout'})).toBeVisible()
+	await expect(page.locator('[data-task-body] [data-detail-title]')).toHaveValue('Smoke suite rollout')
 
 	await page.goto(`${stack.appUrl}/projects/3`)
 	await expect(page.getByRole('heading', {name: 'Travel'})).toBeVisible()
-	await expect(page.locator('.task-focus-summary-title').filter({hasText: 'Smoke suite rollout'})).toHaveCount(0)
+	await expect(page.locator('[data-task-body]')).toHaveCount(0)
 	expect(pageErrors).toEqual([])
 })
 
@@ -860,7 +860,7 @@ test('project focus keeps completed preview subtasks visible after optimistic co
 
 	await parentTaskRow.locator('[data-action="open-task-focus"]').click()
 	await expect(page.getByRole('heading', {name: 'Work'})).toBeVisible()
-	await expect(page.locator('.task-focus-summary-title').filter({hasText: 'Release checklist'})).toBeVisible()
+	await expect(page.locator('[data-task-body] [data-detail-title]')).toHaveValue('Release checklist')
 	const focusChildTaskRow = page.locator('.task-focus-tree [data-task-row-id="204"]')
 	await expect(focusChildTaskRow).toContainText('Verify nested task rendering')
 
